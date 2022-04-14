@@ -1,0 +1,5 @@
+com\cubrid\parser\SqlMapXMLParser.class
+com\cubrid\database\DatabaseManager.class
+com\cubrid\parser\SqlMapXMLTag.class
+com\cubrid\parser\SqlXmlHandler.class
+com\cubrid\analyzer\SQLAnalyzerForCUBRID.class
