@@ -5,10 +5,10 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URI;
-import java.sql.Connection;
 
 import com.cubrid.database.DatabaseManager;
-import com.cubrid.parser.SqlMapXMLParser;
+import com.cubrid.parser.SqlMapParser;
+import com.cubrid.validator.SQLValidatorForCUBRID;
 
 public class SQLAnalyzerForCUBRID {
 	private final String SUMMARY_FILE_NAME = "summary.log";
@@ -31,10 +31,9 @@ public class SQLAnalyzerForCUBRID {
 	private boolean isBeforeFile = false;
 	
 	private DatabaseManager databaseManager = null;
-
+	
 	public static void main(String[] args) {
 		SQLAnalyzerForCUBRID sqlAnalyzerForCUBRID = new SQLAnalyzerForCUBRID();
-		sqlAnalyzerForCUBRID.openSummary();
 		sqlAnalyzerForCUBRID.start();
 	}
 
@@ -45,7 +44,7 @@ public class SQLAnalyzerForCUBRID {
 			rootPath = new File(".").toURI();
 			writerSummary = new BufferedWriter(new FileWriter(SUMMARY_FILE_NAME));
 		} catch (IOException e) {
-			e.printStackTrace();
+			System.err.println(e.getMessage());
 		}
 	}
 
@@ -61,7 +60,7 @@ public class SQLAnalyzerForCUBRID {
 			writerSummary.append(System.getProperty("line.separator"));
 			writerSummary.flush();
 		} catch (IOException e) {
-			e.printStackTrace();
+			System.err.println(e.getMessage());
 		}
 
 		System.out.println("Start SQL Analyzer For CUBRID.");
@@ -79,7 +78,7 @@ public class SQLAnalyzerForCUBRID {
 			writerSummary.append(System.getProperty("line.separator"));
 			writerSummary.flush();
 		} catch (IOException e) {
-			e.printStackTrace();
+			System.err.println(e.getMessage());
 		}
 
 		System.out.println("");
@@ -93,7 +92,7 @@ public class SQLAnalyzerForCUBRID {
 			writerSummary.append("[ " + String.format("%4d", count) + " ] ");
 			writerSummary.flush();
 		} catch (IOException e) {
-			e.printStackTrace();
+			System.err.println(e.getMessage());
 		}
 
 		System.out.print("[ " + String.format("%4d", count) + " ] ");
@@ -105,7 +104,7 @@ public class SQLAnalyzerForCUBRID {
 			writerSummary.append(System.getProperty("line.separator"));
 			writerSummary.flush();
 		} catch (IOException e) {
-			e.printStackTrace();
+			System.err.println(e.getMessage());
 		}
 
 		System.out.println(filePath);
@@ -122,7 +121,7 @@ public class SQLAnalyzerForCUBRID {
 			writerSummary.append(", E: " + String.format("%4d", error) + " ] ");
 			writerSummary.flush();
 		} catch (IOException e) {
-			e.printStackTrace();
+			System.err.println(e.getMessage());
 		}
 
 		System.out.print("[ T: " + String.format("%4d", total));
@@ -139,7 +138,7 @@ public class SQLAnalyzerForCUBRID {
 			writerSummary.append(System.getProperty("line.separator"));
 			writerSummary.flush();
 		} catch (IOException e) {
-			e.printStackTrace();
+			System.err.println(e.getMessage());
 		}
 
 		System.out.print("         ");
@@ -167,7 +166,7 @@ public class SQLAnalyzerForCUBRID {
 			writerSummary.append(System.getProperty("line.separator"));
 			writerSummary.flush();
 		} catch (IOException e) {
-			e.printStackTrace();
+			System.err.println(e.getMessage());
 		}
 
 		System.out.println("");
@@ -190,7 +189,7 @@ public class SQLAnalyzerForCUBRID {
 			writerSummary.flush();
 			writerSummary.close();
 		} catch (IOException e) {
-			e.printStackTrace();
+			System.err.println(e.getMessage());
 		}
 
 		System.out.println("");
@@ -199,6 +198,8 @@ public class SQLAnalyzerForCUBRID {
 	}
 
 	private void start() {
+		openSummary();
+		
 		traverseDirectory(SQLMAP_PATH);
 
 		if (isBeforeFile == true) {
@@ -219,6 +220,10 @@ public class SQLAnalyzerForCUBRID {
 
 				if (file.isFile() && file.getName().matches(".*.xml")) {
 					isBeforeFile = true;
+					
+					if (file.length() == 0) {
+						continue;
+					}
 
 					appendQueryNumber();
 					parse(file);
@@ -239,7 +244,7 @@ public class SQLAnalyzerForCUBRID {
 						appendDirectorySummary(rootPath.relativize(file.toURI()).toString());
 						traverseDirectory(file.getCanonicalPath().toString());
 					} catch (IOException e) {
-						e.printStackTrace();
+						System.err.println(e.getMessage());
 					}
 				}
 			}
@@ -250,7 +255,7 @@ public class SQLAnalyzerForCUBRID {
 		String filePath = rootPath.relativize(file.toURI()).toString();
 		String fileName = file.getName();
 
-		SqlMapXMLParser sqlMapXMLParser = new SqlMapXMLParser();
-		sqlMapXMLParser.analyze(this, databaseManager, filePath, fileName);
+		SqlMapParser sqlMapParser = new SqlMapParser();
+		sqlMapParser.analyze(this, databaseManager, filePath, fileName);
 	}
 }

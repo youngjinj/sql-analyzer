@@ -1,6 +1,6 @@
 package com.cubrid.parser;
 
-public class SqlMapXMLTag {
+public class SqlMapTag {
 	private String name = null;
 	private String id = null;
 	private String property = null;
@@ -11,7 +11,7 @@ public class SqlMapXMLTag {
 	private String conjunction = null;
 	private StringBuffer contents = null;
 
-	public SqlMapXMLTag() {
+	public SqlMapTag() {
 		contents = new StringBuffer();
 		contents.setLength(0);
 	}
@@ -92,8 +92,9 @@ public class SqlMapXMLTag {
 		this.contents = new StringBuffer(contents);
 	}
 
-	public void addContents(String contents) {
+	public SqlMapTag addContents(String contents) {
 		this.contents.append(contents);
+		return this;
 	}
 
 	public void clear(String contents) {

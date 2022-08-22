@@ -9,6 +9,8 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Properties;
 
+import com.cubrid.validator.SQLValidatorForCUBRID;
+
 public class DatabaseManager {
 	private final String NO_ERROR = "NO_ERROR";
 
@@ -26,19 +28,24 @@ public class DatabaseManager {
 	public final static String UNKNOWN_CLASS_ERROR_FORMAT = ".*\nUnknown\\p{Space}class.*";
 
 	private Connection connection = null;
+	private SQLValidatorForCUBRID validator = null;
 
-	public DatabaseManager() {
+	public void initConnect() {
 		this.connect();
 	}
 
+	public void initPseudoConnect() {
+		validator = new SQLValidatorForCUBRID();
+	}
+	
 	private void connect() {
 		Properties prop = new Properties();
 
 		try {
 			Reader reader = new FileReader("db.properties");
 			prop.load(reader);
-		} catch (IOException e1) {
-			e1.printStackTrace();
+		} catch (IOException e) {
+			System.err.println(e.getMessage());
 		}
 
 		String url = prop.getProperty("url");
@@ -50,7 +57,7 @@ public class DatabaseManager {
 			connection = DriverManager.getConnection(url, user, password);
 			connection.setAutoCommit(true);
 		} catch (Exception e) {
-			e.printStackTrace();
+			System.err.println(e.getMessage());
 		}
 	}
 
@@ -62,7 +69,7 @@ public class DatabaseManager {
 		try {
 			connection.close();
 		} catch (SQLException e) {
-			e.printStackTrace();
+			System.err.println(e.getMessage());
 		}
 	}
 
@@ -74,10 +81,14 @@ public class DatabaseManager {
 		try (PreparedStatement pstmt = connection.prepareStatement(prepareQuery)) {
 			pstmt.executeUpdate();
 		} catch (Exception e) {
-			System.err.println(e.getMessage());
+			// System.err.println(e.getMessage());
 			return e.getMessage();
 		}
 
+		return NO_ERROR;
+	}
+	
+	public String validateQuery(String query) {
 		return NO_ERROR;
 	}
 }

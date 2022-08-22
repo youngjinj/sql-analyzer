@@ -14,49 +14,59 @@ import org.xml.sax.XMLReader;
 import com.cubrid.analyzer.SQLAnalyzerForCUBRID;
 import com.cubrid.database.DatabaseManager;
 
-public class SqlMapXMLParser {
+public class SqlMapParser {
 	private SAXParserFactory saxParserFactory = null;
 	private SAXParser saxParser = null;
 	private XMLReader xmlReader = null;
 
-	public SqlMapXMLParser() {
+	public SqlMapParser() {
 		saxParserFactory = SAXParserFactory.newInstance();
 		saxParserFactory.setNamespaceAware(true);
 		saxParserFactory.setValidating(false);
 
 		try {
+			saxParserFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+		} catch (SAXNotRecognizedException e) {
+			System.err.println(e.getMessage());
+		} catch (SAXNotSupportedException e) {
+			System.err.println(e.getMessage());
+		} catch (ParserConfigurationException e) {
+			System.err.println(e.getMessage());
+		}
+
+		try {
 			saxParser = saxParserFactory.newSAXParser();
 		} catch (ParserConfigurationException e) {
-			e.printStackTrace();
+			System.err.println(e.getMessage());
 		} catch (SAXException e) {
-			e.printStackTrace();
+			System.err.println(e.getMessage());
 		}
 
 		try {
 			xmlReader = saxParser.getXMLReader();
 		} catch (SAXException e) {
-			e.printStackTrace();
+			System.err.println(e.getMessage());
 		}
 	}
 
 	public void analyze(SQLAnalyzerForCUBRID sqlAnalyzer, DatabaseManager databaseManager, String filePath,
 			String fileName) {
-		SqlXmlHandler sqlXmlHandler = new SqlXmlHandler(sqlAnalyzer, databaseManager, filePath, fileName);
+		SqlMapHandler sqlXmlHandler = new SqlMapHandler(sqlAnalyzer, databaseManager, filePath, fileName);
 
 		try {
 			xmlReader.setProperty("http://xml.org/sax/properties/lexical-handler", sqlXmlHandler);
 		} catch (SAXNotRecognizedException e) {
-			e.printStackTrace();
+			System.err.println(e.getMessage());
 		} catch (SAXNotSupportedException e) {
-			e.printStackTrace();
+			System.err.println(e.getMessage());
 		}
 
 		try {
 			saxParser.parse(filePath, sqlXmlHandler);
 		} catch (SAXException e) {
-			e.printStackTrace();
+			System.err.println(e.getMessage());
 		} catch (IOException e) {
-			e.printStackTrace();
+			System.err.println(e.getMessage());
 		}
 	}
 }

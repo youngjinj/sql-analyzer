@@ -11,13 +11,17 @@ import java.util.regex.Pattern;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 import org.xml.sax.ext.DefaultHandler2;
 import org.xml.sax.ext.LexicalHandler;
 
 import com.cubrid.analyzer.SQLAnalyzerForCUBRID;
 import com.cubrid.database.DatabaseManager;
 
-public class SqlXmlHandler extends DefaultHandler2 implements LexicalHandler {
+public class SqlMapHandler extends DefaultHandler2 implements LexicalHandler {
+	private final String BIND_VARIABLE = "?";
+	private final String SPACE_SEPARATOR = " ";
+	
 	private final String NO_ERROR = "NO_ERROR";
 
 	private final String TAG_SQLMAP = "SQLMAP";
@@ -56,14 +60,18 @@ public class SqlXmlHandler extends DefaultHandler2 implements LexicalHandler {
 
 	private final String TAG_KNOWN = TAG_MAPPER + "|" + TAG_DML + "|" + TAG_COMMAND + "|" + TAG_OTHER;
 
-	private final String PTTRN_MASK1 = "1"; /* '$ ~ $' */
-	private final String PTTRN_MASK2 = "'1'"; /* $# ~ $# */
-
+	private final String SQL_MAP_CONFIG_DTD = "http://ibatis.apache.org/dtd/sql-map-config-2.dtd";
+	private final String SQL_MAP_DTD = "http://ibatis.apache.org/dtd/sql-map-2.dtd";
+	
+	private final String MAPPER_CONFIG_DTD = "http://mybatis.org/dtd/mybatis-3-config.dtd";
+	private final String MAPPER_DTD = "http://mybatis.org/dtd/mybatis-3-mapper.dtd";
+	
+	private HashMap<String, String> mapDocType = null;
 	private HashMap<String, String> mapIsEmpty = null;
 	private HashMap<String, String> mapIsEqual = null;
 	private HashMap<String, String> mapIsGreaterLess = null;
 
-	private Stack<SqlMapXMLTag> stackReadTag = null;
+	private Stack<SqlMapTag> stackReadTag = null;
 
 	private int count = 0;
 	private int errorCount = 0;
@@ -78,7 +86,7 @@ public class SqlXmlHandler extends DefaultHandler2 implements LexicalHandler {
 
 	private BufferedWriter writerLog = null;
 
-	public SqlXmlHandler(SQLAnalyzerForCUBRID sqlAnalyzer, DatabaseManager databaseManager, String filePath, String fileName) {
+	public SqlMapHandler(SQLAnalyzerForCUBRID sqlAnalyzer, DatabaseManager databaseManager, String filePath, String fileName) {
 		this.sqlAnalyzer = sqlAnalyzer;
 		this.databaseManager = databaseManager;
 		this.filePath = filePath;
@@ -89,14 +97,34 @@ public class SqlXmlHandler extends DefaultHandler2 implements LexicalHandler {
 		try {
 			writerLog = new BufferedWriter(new FileWriter(logFilePath));
 		} catch (IOException e) {
-			e.printStackTrace();
+			System.err.println(e.getMessage());
 		}
+
+		mapDocType = new HashMap<String, String>();
+		
+		/* iBATIS 2.x
+		 *   - https://github.com/mybatis/ibatis-2/tree/master/src/main/resources/com/ibatis/sqlmap/engine/builder/xml
+		 */
+		// mapDocType.put("http://www.ibatis.com/dtd/sql-map-config-2.dtd".toUpperCase(), SQL_MAP_CONFIG_DTD);
+		mapDocType.put("http://www.ibatis.com/dtd/sql-map-2.dtd".toUpperCase(), SQL_MAP_DTD);
+		
+		/* www.ibatis.com -> ibatis.apache.org */
+		// mapDocType.put("-//ibatis.apache.org//DTD SQL Map Config 2.0//EN".toUpperCase(), SQL_MAP_CONFIG_DTD);
+		mapDocType.put("-//ibatis.apache.org//DTD SQL Map 2.0//EN".toUpperCase(), SQL_MAP_DTD);
+		
+		/* iBATIS 2.3 -> MyBatis 2.5 */
+														
+		/* MyBatis 3.x
+		 *   - https://github.com/mybatis/mybatis-3/tree/master/src/main/java/org/apache/ibatis/builder/xml
+		 */
+		// mapDocType.put("-//mybatis.org//DTD Config 3.0//EN".toUpperCase(), MAPPER_CONFIG_DTD);
+		mapDocType.put("-//mybatis.org//DTD Mapper 3.0//EN".toUpperCase(), MAPPER_DTD);
 
 		mapIsEmpty = new HashMap<String, String>();
 		mapIsEqual = new HashMap<String, String>();
 		mapIsGreaterLess = new HashMap<String, String>();
 
-		stackReadTag = new Stack<SqlMapXMLTag>();
+		stackReadTag = new Stack<SqlMapTag>();
 
 		count = 0;
 		errorCount = 0;
@@ -108,7 +136,7 @@ public class SqlXmlHandler extends DefaultHandler2 implements LexicalHandler {
 			writerLog.append(System.getProperty("line.separator"));
 			writerLog.flush();
 		} catch (IOException e) {
-			e.printStackTrace();
+			System.err.println(e.getMessage());
 		}
 	}
 
@@ -129,7 +157,7 @@ public class SqlXmlHandler extends DefaultHandler2 implements LexicalHandler {
 			writerLog.append(System.getProperty("line.separator"));
 			writerLog.flush();
 		} catch (IOException e) {
-			e.printStackTrace();
+			System.err.println(e.getMessage());
 		}
 	}
 
@@ -138,7 +166,7 @@ public class SqlXmlHandler extends DefaultHandler2 implements LexicalHandler {
 			writerLog.append(query + System.getProperty("line.separator"));
 			writerLog.flush();
 		} catch (IOException e) {
-			e.printStackTrace();
+			System.err.println(e.getMessage());
 		}
 	}
 
@@ -153,7 +181,7 @@ public class SqlXmlHandler extends DefaultHandler2 implements LexicalHandler {
 			writerLog.append(System.getProperty("line.separator"));
 			writerLog.flush();
 		} catch (IOException e) {
-			e.printStackTrace();
+			System.err.println(e.getMessage());
 		}
 	}
 
@@ -165,7 +193,7 @@ public class SqlXmlHandler extends DefaultHandler2 implements LexicalHandler {
 			writerLog.flush();
 			writerLog.close();
 		} catch (IOException e) {
-			e.printStackTrace();
+			System.err.println(e.getMessage());
 		}
 	}
 
@@ -183,7 +211,7 @@ public class SqlXmlHandler extends DefaultHandler2 implements LexicalHandler {
 
 	@Override
 	public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
-		SqlMapXMLTag currentTag = new SqlMapXMLTag();
+		SqlMapTag currentTag = new SqlMapTag();
 		saveStartTag(currentTag, localName, attributes);
 
 		if (currentTag.getName().toUpperCase().matches(TAG_DML)) {
@@ -199,15 +227,16 @@ public class SqlXmlHandler extends DefaultHandler2 implements LexicalHandler {
 		String checkEmpty = contents.trim().replaceAll("\\s", "");
 
 		if (!("".equals(checkEmpty))) {
-			SqlMapXMLTag currentTag = stackReadTag.peek();
+			SqlMapTag currentTag = stackReadTag.peek();
 			currentTag.addContents(contents);
 		}
 	}
 
 	@Override
 	public void endElement(String uri, String localName, String qName) throws SAXException {
-		SqlMapXMLTag currentTag = stackReadTag.pop();
-		SqlMapXMLTag beforeTag = null;
+		SqlMapTag currentTag = stackReadTag.pop();
+		SqlMapTag beforeTag = null;
+		String bindContents = null;
 
 		if (stackReadTag.size() > 0) {
 			beforeTag = stackReadTag.peek();
@@ -235,45 +264,70 @@ public class SqlXmlHandler extends DefaultHandler2 implements LexicalHandler {
 		if (!("".equals(currentTag.getContents().trim()))) {
 			switch (currentTag.getName().toUpperCase()) {
 			case TAG_SELECTKEY:
-				appendQuery(new String(pttrnMtchSQL(currentTag.getContents()) + ";"));
+				bindContents = pttrnMtchSQL(currentTag.getContents());
+				appendQuery(new String(bindContents + ";"));
 				break;
 
 			case TAG_SET:
-				if ((currentTag.getPrepend() == null) && (currentTag.getOpen() == null)
-						&& (currentTag.getClose() == null)) {
-					beforeTag.addContents(" SET " + currentTag.getContents() + " ");
-				}
+				bindContents = pttrnMtchSQL(currentTag.getContents());
+				
+				beforeTag.addContents(" SET ");
+				
+				beforeTag.addContents(bindContents);
+				
+				beforeTag.addContents(SPACE_SEPARATOR);
 				break;
 
 			case TAG_DYNAMIC:
-				if ((currentTag.getPrepend() == null) && (currentTag.getOpen() == null)
-						&& (currentTag.getClose() == null)) {
-					beforeTag.addContents(" " + currentTag.getContents() + " ");
+				bindContents = pttrnMtchSQL(currentTag.getContents());
+				
+				beforeTag.addContents(SPACE_SEPARATOR);
+				
+				if (currentTag.getPrepend() != null) {
+					beforeTag.addContents(currentTag.getPrepend());
+					beforeTag.addContents(SPACE_SEPARATOR);
 				}
-				if ((currentTag.getPrepend() != null) && (currentTag.getOpen() == null)
-						&& (currentTag.getClose() == null)) {
-					beforeTag.addContents(" " + currentTag.getPrepend() + " " + currentTag.getContents() + " ");
+
+				if (currentTag.getOpen() != null) {
+					beforeTag.addContents(currentTag.getOpen());
 				}
-				if ((currentTag.getPrepend() != null) && (currentTag.getOpen() != null)
-						&& (currentTag.getClose() != null)) {
-					beforeTag.addContents(" " + currentTag.getPrepend() + currentTag.getOpen()
-							+ currentTag.getContents() + currentTag.getClose() + " ");
+				
+				beforeTag.addContents(bindContents);
+				
+				if (currentTag.getClose() != null) {
+					beforeTag.addContents(currentTag.getClose());
 				}
+				
+				beforeTag.addContents(SPACE_SEPARATOR);
 				break;
 
 			case TAG_ITERATE:
-				if ((currentTag.getPrepend() == null) && (currentTag.getOpen() != null)
-						&& (currentTag.getClose() != null) && (currentTag.getConjunction() != null)) {
-					beforeTag.addContents(pttrnMtchIterate(currentTag.getContents(),
-							" " + currentTag.getOpen() + PTTRN_MASK2 + currentTag.getConjunction() + PTTRN_MASK2
-									+ currentTag.getConjunction() + PTTRN_MASK2 + currentTag.getClose() + " "));
+				bindContents = pttrnMtchSQL(currentTag.getContents());
+				
+				if (currentTag.getPrepend() != null) {
+					beforeTag.addContents(currentTag.getPrepend());
+					beforeTag.addContents(SPACE_SEPARATOR);
 				}
-				if ((currentTag.getPrepend() != null) && (currentTag.getOpen() != null)
-						&& (currentTag.getClose() != null) && (currentTag.getConjunction() != null)) {
-					beforeTag.addContents(currentTag.getPrepend() + pttrnMtchIterate(currentTag.getContents(),
-							" " + currentTag.getOpen() + PTTRN_MASK2 + currentTag.getConjunction() + PTTRN_MASK2
-									+ currentTag.getConjunction() + PTTRN_MASK2 + currentTag.getClose() + " "));
+				
+				if (currentTag.getOpen() != null) {
+					beforeTag.addContents(currentTag.getOpen());
 				}
+
+				beforeTag.addContents(bindContents);
+				beforeTag.addContents(SPACE_SEPARATOR).addContents(currentTag.getConjunction()).addContents(SPACE_SEPARATOR);
+				beforeTag.addContents(bindContents);
+				beforeTag.addContents(SPACE_SEPARATOR).addContents(currentTag.getConjunction()).addContents(SPACE_SEPARATOR);
+				beforeTag.addContents(bindContents);
+				beforeTag.addContents(SPACE_SEPARATOR).addContents(currentTag.getConjunction()).addContents(SPACE_SEPARATOR);
+				beforeTag.addContents(bindContents);
+				beforeTag.addContents(SPACE_SEPARATOR).addContents(currentTag.getConjunction()).addContents(SPACE_SEPARATOR);
+				beforeTag.addContents(bindContents);
+				
+				if (currentTag.getClose() != null) {
+					beforeTag.addContents(currentTag.getClose());
+				}
+
+				beforeTag.addContents(SPACE_SEPARATOR);
 				break;
 
 			case TAG_ISNOTEMPTY:
@@ -453,7 +507,7 @@ public class SqlXmlHandler extends DefaultHandler2 implements LexicalHandler {
 	}
 
 	@Override
-	public void startDTD(String name, String publicId, String systemId) throws SAXException {
+	public void startDTD(String name, String publicId, String systemId) throws SAXException {	
 	}
 
 	@Override
@@ -480,7 +534,7 @@ public class SqlXmlHandler extends DefaultHandler2 implements LexicalHandler {
 	public void comment(char[] ch, int start, int length) throws SAXException {
 	}
 	
-	private void saveStartTag(SqlMapXMLTag tag, String localName, Attributes attributes) {
+	private void saveStartTag(SqlMapTag tag, String localName, Attributes attributes) {
 		tag.setName(localName);
 
 		if (attributes.getValue("id") != null) {
@@ -531,9 +585,13 @@ public class SqlXmlHandler extends DefaultHandler2 implements LexicalHandler {
 	}
 
 	public String pttrnMtchSQL(Object sql) {
+		/* iBATIS */
 		String pttrn_str1 = "[$][^$]+[$]";
-		String pttrn_str2 = "[#][^#]+[#]"; /* mybatis */
+		String pttrn_str2 = "[#][^#]+[#]";
+		
+		/* MyBatis */
 		String pttrn_str3 = "[#{][^#]+[}]";
+		String pttrn_str4 = "[${][^$]+[}]";
 
 		Pattern pattern = null;
 
@@ -556,21 +614,13 @@ public class SqlXmlHandler extends DefaultHandler2 implements LexicalHandler {
 		while (matcher.find()) {
 			query = matcher.replaceAll("?");
 		}
-		
-		return query;
-	}
 
-	public String pttrnMtchIterate(String replaceStr, String insertStr) {
-		String pttrn_str1 = "[#][^#]+[#]";
-
-		Pattern pattern = null;
-
-		pattern = Pattern.compile(pttrn_str1);
-		Matcher matcher = pattern.matcher(replaceStr);
+		pattern = Pattern.compile(pttrn_str4);
+		matcher = pattern.matcher(query);
 		while (matcher.find()) {
-			replaceStr = matcher.replaceAll(insertStr);
-		}
+			query = matcher.replaceAll("?");
+		}	
 
-		return replaceStr;
+		return query;
 	}
 }
