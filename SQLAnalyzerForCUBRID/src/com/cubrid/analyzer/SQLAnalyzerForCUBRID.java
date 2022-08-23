@@ -39,7 +39,11 @@ public class SQLAnalyzerForCUBRID {
 
 	public SQLAnalyzerForCUBRID() {
 		databaseManager = new DatabaseManager();
+		
+		/* debug */
 		databaseManager.initPseudoConnect();
+		// databaseManager.initConnect();
+		/**/
 		
 		try {
 			rootPath = new File(".").toURI();
@@ -103,12 +107,16 @@ public class SQLAnalyzerForCUBRID {
 		try {
 			writerSummary.append(filePath);
 			writerSummary.append(System.getProperty("line.separator"));
+			writerSummary.append(databaseManager.getErrorBuffer().toString());	/* debug */
 			writerSummary.flush();
 		} catch (IOException e) {
 			System.err.println(e.getMessage());
 		}
 
 		System.out.println(filePath);
+		
+		System.err.println(databaseManager.getErrorBuffer().toString());	/* debug */
+		databaseManager.resetErrorBuffer();	/* debug */
 	}
 
 	public void appendResultSummary(int total, int success, int error) {
@@ -119,7 +127,11 @@ public class SQLAnalyzerForCUBRID {
 		try {
 			writerSummary.append("[ T: " + String.format("%4d", total));
 			writerSummary.append(", S: " + String.format("%4d", success));
-			writerSummary.append(", E: " + String.format("%4d", error) + " ] ");
+			if (error > 0) {
+				writerSummary.append(", E+ " + String.format("%4d", error) + " ] ");
+			} else {
+				writerSummary.append(", E: " + String.format("%4d", error) + " ] ");
+			}
 			writerSummary.flush();
 		} catch (IOException e) {
 			System.err.println(e.getMessage());
@@ -127,7 +139,11 @@ public class SQLAnalyzerForCUBRID {
 
 		System.out.print("[ T: " + String.format("%4d", total));
 		System.out.print(", S: " + String.format("%4d", success));
-		System.out.print(", E: " + String.format("%4d", error) + " ] ");
+		if (error > 0) {
+			System.out.print(", E+ " + String.format("%4d", error) + " ] ");
+		} else {
+			System.out.print(", E: " + String.format("%4d", error) + " ] ");
+		}
 	}
 
 	public void appendSubTotalSummary() {
@@ -135,7 +151,11 @@ public class SQLAnalyzerForCUBRID {
 			writerSummary.append("         ");
 			writerSummary.append("[ T: " + String.format("%4d", subTotalCount));
 			writerSummary.append(", S: " + String.format("%4d", subTotalSuccessCount));
-			writerSummary.append(", E: " + String.format("%4d", subTotalErrorCount) + " ] ");
+			if (subTotalErrorCount > 0) {
+				writerSummary.append(", E+ " + String.format("%4d", subTotalErrorCount) + " ] ");
+			} else {
+				writerSummary.append(", E: " + String.format("%4d", subTotalErrorCount) + " ] ");
+			}
 			writerSummary.append(System.getProperty("line.separator"));
 			writerSummary.flush();
 		} catch (IOException e) {
@@ -145,7 +165,11 @@ public class SQLAnalyzerForCUBRID {
 		System.out.print("         ");
 		System.out.print("[ T: " + String.format("%4d", subTotalCount));
 		System.out.print(", S: " + String.format("%4d", subTotalSuccessCount));
-		System.out.print(", E: " + String.format("%4d", subTotalErrorCount) + " ] ");
+		if (subTotalErrorCount > 0) {
+			System.out.print(", E+ " + String.format("%4d", subTotalErrorCount) + " ] ");
+		} else {
+			System.out.print(", E: " + String.format("%4d", subTotalErrorCount) + " ] ");
+		}
 		System.out.println("");
 
 		totalCount += subTotalCount;
@@ -163,7 +187,11 @@ public class SQLAnalyzerForCUBRID {
 			writerSummary.append("Summary: ");
 			writerSummary.append("[ T: " + String.format("%4d", totalCount));
 			writerSummary.append(", S: " + String.format("%4d", totalSuccessCount));
-			writerSummary.append(", E: " + String.format("%4d", totalErrorCount) + " ] ");
+			if (totalErrorCount > 0) {
+				writerSummary.append(", E+ " + String.format("%4d", totalErrorCount) + " ] ");
+			} else {
+				writerSummary.append(", E: " + String.format("%4d", totalErrorCount) + " ] ");
+			}
 			writerSummary.append(System.getProperty("line.separator"));
 			writerSummary.flush();
 		} catch (IOException e) {
@@ -174,7 +202,11 @@ public class SQLAnalyzerForCUBRID {
 		System.out.print("Summary: ");
 		System.out.print("[ T: " + String.format("%4d", totalCount));
 		System.out.print(", S: " + String.format("%4d", totalSuccessCount));
-		System.out.print(", E: " + String.format("%4d", totalErrorCount) + " ] ");
+		if (totalErrorCount > 0) {
+			System.out.print(", E+ " + String.format("%4d", totalErrorCount) + " ] ");
+		} else {
+			System.out.print(", E: " + String.format("%4d", totalErrorCount) + " ] ");
+		}
 		System.out.println("");
 
 		totalCount = 0;
@@ -228,7 +260,15 @@ public class SQLAnalyzerForCUBRID {
 
 					appendQueryNumber();
 					parse(file);
-					appendQuerySummary(rootPath.relativize(file.toURI()).toString());
+					
+					/* debug */
+					// appendQuerySummary(rootPath.relativize(file.toURI()).toString());
+					try {
+						appendQuerySummary(file.getCanonicalPath().toString());
+					} catch (IOException e) {
+						System.err.println(e.getMessage());
+					}
+					/**/
 
 					continue;
 				}

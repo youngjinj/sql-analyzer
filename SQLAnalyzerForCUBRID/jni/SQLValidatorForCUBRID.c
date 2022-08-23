@@ -45,6 +45,7 @@ typedef int (*fn_lang_init)(); /* lang_Initialized */
 typedef int (*fn_lang_set_charset_lang)(const char *lang_charset); /* lang_Language_initialized */
 typedef void (*fn_db_set_connect_status)(int status);
 typedef DB_SESSION * (*fn_db_open_buffer)(char * query);
+typedef void (*fn_db_close_session)(DB_SESSION * session);
 
 static fn_er_init cub_er_init = NULL;
 static fn_er_errid cub_er_errid = NULL;
@@ -55,6 +56,7 @@ static fn_lang_init cub_lang_init = NULL;
 static fn_lang_set_charset_lang cub_lang_set_charset_lang = NULL;
 static fn_db_set_connect_status cub_db_set_connect_status = NULL;
 static fn_db_open_buffer cub_db_open_buffer = NULL;
+static fn_db_close_session cub_db_close_session = NULL;
 
 static int load(HINSTANCE hDLL, const char * libraryPath);
 static int init(const char *lang_charset);
@@ -159,6 +161,8 @@ JNIEXPORT jstring JNICALL Java_com_cubrid_validator_SQLValidatorForCUBRID_valida
 		}
 	} while (session_error != NULL);
 
+	cub_db_close_session (session);
+
 	if (hDLL != NULL) {
 		FreeLibrary(hDLL);
 		hDLL = NULL;
@@ -261,6 +265,13 @@ static int load(HINSTANCE hDLL, const char * libraryPath) {
 			"db_open_buffer");
 	if (cub_db_open_buffer == NULL) {
 		fprintf(stderr, "Failed to GetProcAddress(db_open_buffer).\n");
+		return ER_FAILED;
+	}
+
+	cub_db_close_session = (fn_db_close_session) GetProcAddress(hDLL,
+			"db_close_session");
+	if (cub_db_close_session == NULL) {
+		fprintf(stderr, "Failed to GetProcAddress(db_close_session).\n");
 		return ER_FAILED;
 	}
 

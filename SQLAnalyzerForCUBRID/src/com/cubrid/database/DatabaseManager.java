@@ -29,6 +29,12 @@ public class DatabaseManager {
 
 	private Connection connection = null;
 	private SQLValidatorForCUBRID validator = null;
+	private boolean onlyCheckValidation = false;
+	private StringBuilder errorBuffer = null;
+
+	public DatabaseManager() {
+		errorBuffer = new StringBuilder();
+	}
 
 	public void initConnect() {
 		this.connect();
@@ -36,6 +42,7 @@ public class DatabaseManager {
 
 	public void initPseudoConnect() {
 		validator = new SQLValidatorForCUBRID();
+		onlyCheckValidation = true;
 	}
 	
 	private void connect() {
@@ -59,6 +66,8 @@ public class DatabaseManager {
 		} catch (Exception e) {
 			System.err.println(e.getMessage());
 		}
+		
+		onlyCheckValidation = false;
 	}
 
 	public Connection getConnection() {
@@ -70,6 +79,22 @@ public class DatabaseManager {
 			connection.close();
 		} catch (SQLException e) {
 			System.err.println(e.getMessage());
+		}
+	}
+	
+	public StringBuilder getErrorBuffer() {
+		return errorBuffer;
+	}
+	
+	public void resetErrorBuffer() {
+		errorBuffer.setLength(0);
+	}
+
+	public String checkQuery(String query) {
+		if (onlyCheckValidation) {
+			return validateQuery(query);
+		} else {
+			return prepareQuery(query);
 		}
 	}
 
@@ -85,7 +110,7 @@ public class DatabaseManager {
 			return e.getMessage();
 		}
 
-		return null;
+		return "NO_ERROR";
 	}
 	
 	public String validateQuery(String query) {

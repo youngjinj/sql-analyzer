@@ -15,6 +15,7 @@ public class SQLValidatorForCUBRID {
 
 	public static void main(String[] args) {
 		SQLValidatorForCUBRID jniExample = new SQLValidatorForCUBRID();
-		jniExample.validateSQL("insert into value (?, ?);");
+		String result = jniExample.validateSQL("select * from game;");
+		System.err.println(result);
 	}
 }
