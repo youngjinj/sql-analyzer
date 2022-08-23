@@ -2,7 +2,7 @@
 CLASS_PATH = ../target/classes/
 
 # Define a variable for jdk_path
-JDK_PATH = C:\DATA\Development\java-1.8.0-openjdk-1.8.0.275-1.b01.ojdkbuild.windows.x86_64
+JDK_PATH = $(JAVA_HOME)
 
 # Define a virtual path for .class in the bin directory
 vpath %.class $(CLASS_PATH)
@@ -15,7 +15,7 @@ sqlvalidator.dll : SQLValidatorForCUBRID.o
 
 # $@ matches the target, $< matches the first dependancy
 SQLValidatorForCUBRID.o : SQLValidatorForCUBRID.c SQLValidatorForCUBRID.h
-	gcc -m64 -g -I"$(JDK_PATH)\include" -I"$(JDK_PATH)\include\win32" -c $< -o $@
+	gcc -m64 -g -I"$(JDK_PATH)\include" -I"$(JDK_PATH)\include\win32" -I"$(CUBRID)\include" -c $< -o $@
 
 # $* matches the target filename without the extension
 SQLValidatorForCUBRID.h : com/cubrid/validator/SQLValidatorForCUBRID.class

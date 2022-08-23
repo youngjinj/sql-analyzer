@@ -39,6 +39,7 @@ public class SQLAnalyzerForCUBRID {
 
 	public SQLAnalyzerForCUBRID() {
 		databaseManager = new DatabaseManager();
+		databaseManager.initPseudoConnect();
 		
 		try {
 			rootPath = new File(".").toURI();

@@ -85,10 +85,10 @@ public class DatabaseManager {
 			return e.getMessage();
 		}
 
-		return NO_ERROR;
+		return null;
 	}
 	
 	public String validateQuery(String query) {
-		return NO_ERROR;
+		return validator.validateSQL(query);
 	}
 }

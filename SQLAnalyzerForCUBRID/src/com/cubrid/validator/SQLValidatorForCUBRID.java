@@ -11,10 +11,10 @@ public class SQLValidatorForCUBRID {
 		}
 	}
 
-	public native void validateSQL(String query);
+	public native String validateSQL(String query);
 
 	public static void main(String[] args) {
 		SQLValidatorForCUBRID jniExample = new SQLValidatorForCUBRID();
-		jniExample.validateSQL("select 1");
+		jniExample.validateSQL("insert into value (?, ?);");
 	}
 }

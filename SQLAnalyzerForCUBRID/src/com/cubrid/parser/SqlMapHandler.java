@@ -250,7 +250,7 @@ public class SqlMapHandler extends DefaultHandler2 implements LexicalHandler {
 			String query = pttrnMtchSQL(currentTag.getContents()) + ";";
 			String result = null;
 			appendQuery(query);
-			result = databaseManager.prepareQuery(query);
+			result = databaseManager.validateQuery(query);
 			if (!NO_ERROR.equals(result)) {
 				errorCount++;
 			}
