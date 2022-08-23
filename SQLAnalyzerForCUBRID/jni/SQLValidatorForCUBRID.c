@@ -102,9 +102,6 @@ JNIEXPORT jstring JNICALL Java_com_cubrid_validator_SQLValidatorForCUBRID_valida
 		goto exit_on_error;
 	}
 
-	free(query);
-	query = NULL;
-
 	session_error = cub_db_get_errors(session);
 	do {
 		int line = 0, col = 0;
@@ -120,14 +117,12 @@ JNIEXPORT jstring JNICALL Java_com_cubrid_validator_SQLValidatorForCUBRID_valida
 
 			er_msg = cub_er_msg();
 
-			len = snprintf(NULL, 0,
-					"In line %d, column %d,\n\nERROR(%d): %s\n", line, col,
-					error, er_msg);
+			len = snprintf(NULL, 0, "In line %d, column %d,\n\nERROR(%d): %s\n",
+					line, col, error, er_msg);
 
 			if (out_buf == NULL) {
 				out_buf = malloc(sizeof(char) * DEFAULT_BUF_LENGTH);
-				if (out_buf == NULL)
-				{
+				if (out_buf == NULL) {
 					fprintf(stderr, "Failed to allocate memory.\n");
 					goto exit_on_error;
 				}
@@ -136,16 +131,15 @@ JNIEXPORT jstring JNICALL Java_com_cubrid_validator_SQLValidatorForCUBRID_valida
 				out_buf_maxlen = DEFAULT_BUF_LENGTH;
 
 				snprintf(out_buf, len,
-						"In line %d, column %d,\n\nERROR(%d): %s\n", line,
-						col, error, er_msg);
+						"In line %d, column %d,\n\nERROR(%d): %s\n", line, col,
+						error, er_msg);
 				out_buf_len += len;
 			} else {
 				if (out_buf_len + len > out_buf_maxlen) {
 					out_buf = realloc(out_buf,
 							sizeof(char)
 									* (out_buf_maxlen + DEFAULT_BUF_LENGTH));
-					if (out_buf == NULL)
-					{
+					if (out_buf == NULL) {
 						fprintf(stderr, "Failed to allocate memory.\n");
 						goto exit_on_error;
 					}
@@ -154,41 +148,47 @@ JNIEXPORT jstring JNICALL Java_com_cubrid_validator_SQLValidatorForCUBRID_valida
 				}
 
 				snprintf(out_buf + out_buf_len - 1, len,
-						"In line %d, column %d,\n\nERROR(%d): %s\n", line,
-						col, error, er_msg);
+						"In line %d, column %d,\n\nERROR(%d): %s\n", line, col,
+						error, er_msg);
 				out_buf_len += len;
 			}
 		}
 	} while (session_error != NULL);
 
-	cub_db_close_session (session);
+	free(query);
+	query = NULL;
+
+	cub_db_close_session(session);
+	session = NULL;
 
 	if (hDLL != NULL) {
 		FreeLibrary(hDLL);
 		hDLL = NULL;
 	}
 
-	if (has_error)
-	{
+	if (has_error) {
 		result = char_to_jstring(env, out_buf);
-	}
-	else
-	{
+	} else {
 		result = char_to_jstring(env, "NO_ERROR");
 	}
 
 	exit_on_error:
 
-	if (query) {
+	if (query != NULL) {
 		free(query);
 		query = NULL;
 	}
 
-	if (out_buf) {
-		free (out_buf);
+	if (out_buf != NULL) {
+		free(out_buf);
 		out_buf = NULL;
 		out_buf_len = 0;
 		out_buf_maxlen = 0;
+	}
+
+	if (session != NULL) {
+		cub_db_close_session(session);
+		session = NULL;
 	}
 
 	if (hDLL != NULL) {

@@ -21,7 +21,7 @@ import com.cubrid.database.DatabaseManager;
 public class SqlMapHandler extends DefaultHandler2 implements LexicalHandler {
 	private final String BIND_VARIABLE = "?";
 	private final String SPACE_SEPARATOR = " ";
-	
+
 	private final String NO_ERROR = "NO_ERROR";
 
 	private final String TAG_SQLMAP = "SQLMAP";
@@ -62,10 +62,10 @@ public class SqlMapHandler extends DefaultHandler2 implements LexicalHandler {
 
 	private final String SQL_MAP_CONFIG_DTD = "http://ibatis.apache.org/dtd/sql-map-config-2.dtd";
 	private final String SQL_MAP_DTD = "http://ibatis.apache.org/dtd/sql-map-2.dtd";
-	
+
 	private final String MAPPER_CONFIG_DTD = "http://mybatis.org/dtd/mybatis-3-config.dtd";
 	private final String MAPPER_DTD = "http://mybatis.org/dtd/mybatis-3-mapper.dtd";
-	
+
 	private HashMap<String, String> mapDocType = null;
 	private HashMap<String, String> mapIsEmpty = null;
 	private HashMap<String, String> mapIsEqual = null;
@@ -86,21 +86,22 @@ public class SqlMapHandler extends DefaultHandler2 implements LexicalHandler {
 
 	private BufferedWriter writerLog = null;
 
-	public SqlMapHandler(SQLAnalyzerForCUBRID sqlAnalyzer, DatabaseManager databaseManager, String filePath, String fileName) {
+	public SqlMapHandler(SQLAnalyzerForCUBRID sqlAnalyzer, DatabaseManager databaseManager, String filePath,
+			String fileName) {
 		this.sqlAnalyzer = sqlAnalyzer;
 		this.databaseManager = databaseManager;
 		this.filePath = filePath;
 		this.fileName = fileName;
 
 		logFilePath = this.filePath.substring(0, filePath.lastIndexOf(".")) + ".log";
-		
+
 		try {
 			writerLog = new BufferedWriter(new FileWriter(logFilePath));
 		} catch (IOException e) {
 			System.err.println(e.getMessage());
 		}
 
-		mapDocType = new HashMap<String, String>();
+mapDocType = new HashMap<String, String>();
 		
 		/* iBATIS 2.x
 		 *   - https://github.com/mybatis/ibatis-2/tree/master/src/main/resources/com/ibatis/sqlmap/engine/builder/xml
@@ -253,13 +254,17 @@ public class SqlMapHandler extends DefaultHandler2 implements LexicalHandler {
 			result = databaseManager.checkQuery(query);
 			if (!NO_ERROR.equals(result)) {
 				errorCount++;
-				
+
 				/* debug */
 				StringBuilder errorBuffer = databaseManager.getErrorBuffer();
-				errorBuffer.append("--------------------------------------------------------------------------------");
+				if (errorBuffer.length() == 0) {
+					errorBuffer
+							.append("--------------------------------------------------------------------------------");
+				}
 				errorBuffer.append(System.getProperty("line.separator"));
 				errorBuffer.append(result);
 				errorBuffer.append(System.getProperty("line.separator"));
+				errorBuffer.append("--------------------------------------------------------------------------------");
 				/**/
 			}
 			appendResult(result);
@@ -278,19 +283,19 @@ public class SqlMapHandler extends DefaultHandler2 implements LexicalHandler {
 
 			case TAG_SET:
 				bindContents = pttrnMtchSQL(currentTag.getContents());
-				
+
 				beforeTag.addContents(" SET ");
-				
+
 				beforeTag.addContents(bindContents);
-				
+
 				beforeTag.addContents(SPACE_SEPARATOR);
 				break;
 
 			case TAG_DYNAMIC:
 				bindContents = pttrnMtchSQL(currentTag.getContents());
-				
+
 				beforeTag.addContents(SPACE_SEPARATOR);
-				
+
 				if (currentTag.getPrepend() != null) {
 					beforeTag.addContents(currentTag.getPrepend());
 					beforeTag.addContents(SPACE_SEPARATOR);
@@ -299,38 +304,42 @@ public class SqlMapHandler extends DefaultHandler2 implements LexicalHandler {
 				if (currentTag.getOpen() != null) {
 					beforeTag.addContents(currentTag.getOpen());
 				}
-				
+
 				beforeTag.addContents(bindContents);
-				
+
 				if (currentTag.getClose() != null) {
 					beforeTag.addContents(currentTag.getClose());
 				}
-				
+
 				beforeTag.addContents(SPACE_SEPARATOR);
 				break;
 
 			case TAG_ITERATE:
 				bindContents = pttrnMtchSQL(currentTag.getContents());
-				
+
 				if (currentTag.getPrepend() != null) {
 					beforeTag.addContents(currentTag.getPrepend());
 					beforeTag.addContents(SPACE_SEPARATOR);
 				}
-				
+
 				if (currentTag.getOpen() != null) {
 					beforeTag.addContents(currentTag.getOpen());
 				}
 
 				beforeTag.addContents(bindContents);
-				beforeTag.addContents(SPACE_SEPARATOR).addContents(currentTag.getConjunction()).addContents(SPACE_SEPARATOR);
+				beforeTag.addContents(SPACE_SEPARATOR).addContents(currentTag.getConjunction())
+						.addContents(SPACE_SEPARATOR);
 				beforeTag.addContents(bindContents);
-				beforeTag.addContents(SPACE_SEPARATOR).addContents(currentTag.getConjunction()).addContents(SPACE_SEPARATOR);
+				beforeTag.addContents(SPACE_SEPARATOR).addContents(currentTag.getConjunction())
+						.addContents(SPACE_SEPARATOR);
 				beforeTag.addContents(bindContents);
-				beforeTag.addContents(SPACE_SEPARATOR).addContents(currentTag.getConjunction()).addContents(SPACE_SEPARATOR);
+				beforeTag.addContents(SPACE_SEPARATOR).addContents(currentTag.getConjunction())
+						.addContents(SPACE_SEPARATOR);
 				beforeTag.addContents(bindContents);
-				beforeTag.addContents(SPACE_SEPARATOR).addContents(currentTag.getConjunction()).addContents(SPACE_SEPARATOR);
+				beforeTag.addContents(SPACE_SEPARATOR).addContents(currentTag.getConjunction())
+						.addContents(SPACE_SEPARATOR);
 				beforeTag.addContents(bindContents);
-				
+
 				if (currentTag.getClose() != null) {
 					beforeTag.addContents(currentTag.getClose());
 				}
@@ -515,7 +524,7 @@ public class SqlMapHandler extends DefaultHandler2 implements LexicalHandler {
 	}
 
 	@Override
-	public void startDTD(String name, String publicId, String systemId) throws SAXException {	
+	public void startDTD(String name, String publicId, String systemId) throws SAXException {
 	}
 
 	@Override
@@ -541,7 +550,7 @@ public class SqlMapHandler extends DefaultHandler2 implements LexicalHandler {
 	@Override
 	public void comment(char[] ch, int start, int length) throws SAXException {
 	}
-	
+
 	private void saveStartTag(SqlMapTag tag, String localName, Attributes attributes) {
 		tag.setName(localName);
 
@@ -575,7 +584,7 @@ public class SqlMapHandler extends DefaultHandler2 implements LexicalHandler {
 
 		stackReadTag.push(tag);
 	}
-	
+
 	public String pttrnMtchBlank(Object sql) {
 		String pttrn_str1 = "[) ]+\\p{Alnum}+$";
 
@@ -596,7 +605,7 @@ public class SqlMapHandler extends DefaultHandler2 implements LexicalHandler {
 		/* iBATIS */
 		String pttrn_str1 = "[$][^$]+[$]";
 		String pttrn_str2 = "[#][^#]+[#]";
-		
+
 		/* MyBatis */
 		String pttrn_str3 = "[#{][^#]+[}]";
 		String pttrn_str4 = "[${][^$]+[}]";
@@ -627,7 +636,7 @@ public class SqlMapHandler extends DefaultHandler2 implements LexicalHandler {
 		matcher = pattern.matcher(query);
 		while (matcher.find()) {
 			query = matcher.replaceAll("?");
-		}	
+		}
 
 		return query;
 	}

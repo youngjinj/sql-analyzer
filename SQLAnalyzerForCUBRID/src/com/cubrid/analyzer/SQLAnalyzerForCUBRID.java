@@ -107,7 +107,6 @@ public class SQLAnalyzerForCUBRID {
 		try {
 			writerSummary.append(filePath);
 			writerSummary.append(System.getProperty("line.separator"));
-			writerSummary.append(databaseManager.getErrorBuffer().toString());	/* debug */
 			writerSummary.flush();
 		} catch (IOException e) {
 			System.err.println(e.getMessage());
@@ -115,8 +114,28 @@ public class SQLAnalyzerForCUBRID {
 
 		System.out.println(filePath);
 		
-		System.err.println(databaseManager.getErrorBuffer().toString());	/* debug */
-		databaseManager.resetErrorBuffer();	/* debug */
+		/* debug */
+		if (databaseManager.getErrorBuffer().length() > 0)
+		{
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			
+			try {
+				writerSummary.append(databaseManager.getErrorBuffer().toString());
+				writerSummary.append(System.getProperty("line.separator"));
+				writerSummary.flush();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			
+			System.err.println(databaseManager.getErrorBuffer().toString());
+
+			databaseManager.resetErrorBuffer();
+		}
+		/**/
 	}
 
 	public void appendResultSummary(int total, int success, int error) {
@@ -261,8 +280,8 @@ public class SQLAnalyzerForCUBRID {
 					appendQueryNumber();
 					parse(file);
 					
-					/* debug */
-					// appendQuerySummary(rootPath.relativize(file.toURI()).toString());
+					appendQuerySummary(rootPath.relativize(file.toURI()).toString());
+					/* debug *
 					try {
 						appendQuerySummary(file.getCanonicalPath().toString());
 					} catch (IOException e) {
