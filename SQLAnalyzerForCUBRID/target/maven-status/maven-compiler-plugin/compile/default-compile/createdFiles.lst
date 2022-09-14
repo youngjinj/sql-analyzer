@@ -1,6 +1,0 @@
-com\cubrid\parser\SqlMapParser.class
-com\cubrid\parser\SqlMapTag.class
-com\cubrid\database\DatabaseManager.class
-com\cubrid\validator\SQLValidatorForCUBRID.class
-com\cubrid\parser\SqlMapHandler.class
-com\cubrid\analyzer\SQLAnalyzerForCUBRID.class
