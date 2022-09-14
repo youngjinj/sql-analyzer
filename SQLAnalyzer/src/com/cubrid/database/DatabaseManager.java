@@ -38,13 +38,14 @@ public class DatabaseManager {
 
 	public void initConnect() {
 		this.connect();
+		onlyCheckValidation = false;
 	}
 
 	public void initPseudoConnect() {
 		validator = new SQLValidator();
 		onlyCheckValidation = true;
 	}
-	
+
 	private void connect() {
 		Properties prop = new Properties();
 
@@ -66,12 +67,6 @@ public class DatabaseManager {
 		} catch (Exception e) {
 			System.err.println(e.getMessage());
 		}
-		
-		onlyCheckValidation = false;
-	}
-
-	public Connection getConnection() {
-		return this.connection;
 	}
 
 	public void close() {
@@ -81,11 +76,11 @@ public class DatabaseManager {
 			System.err.println(e.getMessage());
 		}
 	}
-	
+
 	public StringBuilder getErrorBuffer() {
 		return errorBuffer;
 	}
-	
+
 	public void resetErrorBuffer() {
 		errorBuffer.setLength(0);
 	}
@@ -98,7 +93,7 @@ public class DatabaseManager {
 		}
 	}
 
-	public String prepareQuery(String query) {
+	private String prepareQuery(String query) {
 		String prepareQuery = null;
 		prepareQuery = query.replaceAll("'", "''");
 		prepareQuery = "PREPARE q FROM '" + prepareQuery + "'";
@@ -112,8 +107,8 @@ public class DatabaseManager {
 
 		return "NO_ERROR";
 	}
-	
-	public String validateQuery(String query) {
+
+	private String validateQuery(String query) {
 		return validator.validateSQL(query);
 	}
 }

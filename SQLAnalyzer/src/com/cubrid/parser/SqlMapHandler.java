@@ -90,8 +90,7 @@ public class SqlMapHandler extends DefaultHandler2 implements LexicalHandler {
 
 	private BufferedWriter writerLog = null;
 
-	public SqlMapHandler(SQLAnalyzer sqlAnalyzer, DatabaseManager databaseManager, String filePath,
-			String fileName) {
+	public SqlMapHandler(SQLAnalyzer sqlAnalyzer, DatabaseManager databaseManager, String filePath, String fileName) {
 		this.sqlAnalyzer = sqlAnalyzer;
 		this.databaseManager = databaseManager;
 		this.filePath = filePath;
@@ -105,7 +104,7 @@ public class SqlMapHandler extends DefaultHandler2 implements LexicalHandler {
 			System.err.println(e.getMessage());
 		}
 
-mapDocType = new HashMap<String, String>();
+		mapDocType = new HashMap<String, String>();
 		
 		/* iBATIS 2.x
 		 *   - https://github.com/mybatis/ibatis-2/tree/master/src/main/resources/com/ibatis/sqlmap/engine/builder/xml
@@ -527,14 +526,13 @@ mapDocType = new HashMap<String, String>();
 			case TAG_CHOOSE:
 				beforeTag.addContents(currentTag.getContents());
 				break;
-				
+
 			case TAG_WHEN:
-				if (TAG_CHOOSE.equals(beforeTag.getName().toUpperCase()) && beforeTag.getContents().isEmpty())
-				{
+				if (TAG_CHOOSE.equals(beforeTag.getName().toUpperCase()) && beforeTag.getContents().isEmpty()) {
 					beforeTag.addContents(" " + pttrnMtchSQL(currentTag.getContents()) + " ");
 				}
 				break;
-				
+
 			case TAG_OTHERWISE:
 				break;
 

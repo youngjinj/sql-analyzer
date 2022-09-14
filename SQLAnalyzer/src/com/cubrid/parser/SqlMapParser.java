@@ -49,10 +49,9 @@ public class SqlMapParser {
 		}
 	}
 
-	public void analyze(SQLAnalyzer sqlAnalyzer, DatabaseManager databaseManager, String filePath,
-			String fileName) {
+	public void analyze(SQLAnalyzer sqlAnalyzer, DatabaseManager databaseManager, String filePath, String fileName) {
 		SqlMapHandler sqlXmlHandler = new SqlMapHandler(sqlAnalyzer, databaseManager, filePath, fileName);
-		
+
 		try {
 			xmlReader.setProperty("http://xml.org/sax/properties/lexical-handler", sqlXmlHandler);
 		} catch (SAXNotRecognizedException e) {

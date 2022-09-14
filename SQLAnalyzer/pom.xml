@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>youngjinj</groupId>
 	<artifactId>SQLAnalyzer</artifactId>
-	<version>2022.08.25</version>
+	<version>2022.09.15</version>
 
 	<repositories>
 		<repository>

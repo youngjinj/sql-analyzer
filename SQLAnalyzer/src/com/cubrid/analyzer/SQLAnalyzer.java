@@ -29,9 +29,9 @@ public class SQLAnalyzer {
 	private int subTotalErrorCount = 0;
 
 	private boolean isBeforeFile = false;
-	
+
 	private DatabaseManager databaseManager = null;
-	
+
 	public static void main(String[] args) {
 		SQLAnalyzer sqlAnalyzer = new SQLAnalyzer();
 		sqlAnalyzer.start();
@@ -39,12 +39,12 @@ public class SQLAnalyzer {
 
 	public SQLAnalyzer() {
 		databaseManager = new DatabaseManager();
-		
+
 		/* debug */
-		// databaseManager.initPseudoConnect();
-		databaseManager.initConnect();
+		databaseManager.initPseudoConnect();
+		// databaseManager.initConnect();
 		/**/
-		
+
 		try {
 			rootPath = new File(".").toURI();
 			writerSummary = new BufferedWriter(new FileWriter(SUMMARY_FILE_NAME));
@@ -113,16 +113,15 @@ public class SQLAnalyzer {
 		}
 
 		System.out.println(filePath);
-		
+
 		/* debug */
-		if (databaseManager.getErrorBuffer().length() > 0)
-		{
+		if (databaseManager.getErrorBuffer().length() > 0) {
 			try {
-				Thread.sleep(100);
+				Thread.sleep(100);	/* Without it, the output order may be reversed. */
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-			
+
 			try {
 				writerSummary.append(databaseManager.getErrorBuffer().toString());
 				writerSummary.append(System.getProperty("line.separator"));
@@ -130,7 +129,7 @@ public class SQLAnalyzer {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			
+
 			System.err.println(databaseManager.getErrorBuffer().toString());
 
 			databaseManager.resetErrorBuffer();
@@ -251,7 +250,7 @@ public class SQLAnalyzer {
 
 	private void start() {
 		openSummary();
-		
+
 		traverseDirectory(SQLMAP_PATH);
 
 		if (isBeforeFile == true) {
@@ -272,14 +271,14 @@ public class SQLAnalyzer {
 
 				if (file.isFile() && file.getName().matches(".*.xml")) {
 					isBeforeFile = true;
-					
+
 					if (file.length() == 0) {
 						continue;
 					}
 
 					appendQueryNumber();
 					parse(file);
-					
+
 					appendQuerySummary(rootPath.relativize(file.toURI()).toString());
 					/* debug *
 					try {
