@@ -1,6 +1,6 @@
-D:\GitHub\sql-analyzer\SQLAnalyzer\src\com\cubrid\parser\SqlMapHandler.java
-D:\GitHub\sql-analyzer\SQLAnalyzer\src\com\cubrid\analyzer\SQLAnalyzer.java
-D:\GitHub\sql-analyzer\SQLAnalyzer\src\com\cubrid\parser\SqlMapParser.java
-D:\GitHub\sql-analyzer\SQLAnalyzer\src\com\cubrid\parser\SqlMapTag.java
-D:\GitHub\sql-analyzer\SQLAnalyzer\src\com\cubrid\validator\SQLValidator.java
-D:\GitHub\sql-analyzer\SQLAnalyzer\src\com\cubrid\database\DatabaseManager.java
+D:\GitHub\sql-analyzer\sql-analyzer\src\com\cubrid\parser\SqlMapHandler.java
+D:\GitHub\sql-analyzer\sql-analyzer\src\com\cubrid\database\DatabaseManager.java
+D:\GitHub\sql-analyzer\sql-analyzer\src\com\cubrid\parser\SqlMapParser.java
+D:\GitHub\sql-analyzer\sql-analyzer\src\com\cubrid\analyzer\SQLAnalyzer.java
+D:\GitHub\sql-analyzer\sql-analyzer\src\com\cubrid\validator\SQLValidator.java
+D:\GitHub\sql-analyzer\sql-analyzer\src\com\cubrid\parser\SqlMapTag.java
