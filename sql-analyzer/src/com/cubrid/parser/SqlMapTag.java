@@ -9,6 +9,7 @@ public class SqlMapTag {
 	private String open = null;
 	private String close = null;
 	private String conjunction = null;
+	private String test = null;
 	private StringBuffer contents = null;
 
 	public SqlMapTag() {
@@ -80,6 +81,14 @@ public class SqlMapTag {
 		this.conjunction = conjunction;
 	}
 
+	public String getTest() {
+		return test;
+	}
+
+	public void setTest(String test) {
+		this.test = test;
+	}
+	
 	public String getContents() {
 		return new String(contents);
 	}
@@ -111,6 +120,7 @@ public class SqlMapTag {
 		System.out.println("Tag Open          : " + open);
 		System.out.println("Tag Close         : " + close);
 		System.out.println("Tag Conjunction   : " + conjunction);
+		System.out.println("Tag Test          : " + test);
 		System.out.println("Tag Contents Size : " + contents.length());
 		System.out.println("------------------------------------------------------------");
 	}

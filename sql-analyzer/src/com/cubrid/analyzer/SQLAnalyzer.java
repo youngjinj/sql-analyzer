@@ -6,13 +6,19 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URI;
 
+import com.beust.jcommander.JCommander;
 import com.cubrid.database.DatabaseManager;
 import com.cubrid.parser.SqlMapParser;
-import com.cubrid.validator.SQLValidator;
 
+/**
+ * @author Youngjinj
+ *
+ */
 public class SQLAnalyzer {
 	private final String SUMMARY_FILE_NAME = "summary.log";
 	private final String SQLMAP_PATH = "sqlmap";
+
+	private boolean syntaxOnly = false;
 
 	private String resultFilePath = null;
 	private File resultFile = null;
@@ -33,17 +39,28 @@ public class SQLAnalyzer {
 	private DatabaseManager databaseManager = null;
 
 	public static void main(String[] args) {
-		SQLAnalyzer sqlAnalyzer = new SQLAnalyzer();
+		SQLAnalyzerArgs sqlAnalyzerArgs = new SQLAnalyzerArgs();
+
+		JCommander jCommander = JCommander.newBuilder().addObject(sqlAnalyzerArgs).build();
+		jCommander.parse(args);
+
+		if (sqlAnalyzerArgs.getHelp()) {
+			jCommander.usage();
+			return;
+		}
+
+		SQLAnalyzer sqlAnalyzer = new SQLAnalyzer(sqlAnalyzerArgs.getSyntaxOnly());
 		sqlAnalyzer.start();
 	}
 
-	public SQLAnalyzer() {
+	public SQLAnalyzer(boolean syntaxOnly) {
 		databaseManager = new DatabaseManager();
 
-		/* debug */
-		databaseManager.initPseudoConnect();
-		// databaseManager.initConnect();
-		/**/
+		if (syntaxOnly) {
+			databaseManager.initPseudoConnect();
+		} else {
+			databaseManager.initConnect();
+		}
 
 		try {
 			rootPath = new File(".").toURI();
@@ -117,7 +134,7 @@ public class SQLAnalyzer {
 		/* debug */
 		if (databaseManager.getErrorBuffer().length() > 0) {
 			try {
-				Thread.sleep(100);	/* Without it, the output order may be reversed. */
+				Thread.sleep(100); /* Without it, the output order may be reversed. */
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
@@ -280,7 +297,10 @@ public class SQLAnalyzer {
 					parse(file);
 
 					appendQuerySummary(rootPath.relativize(file.toURI()).toString());
-					/* debug *
+					
+					/*-
+					 * debug
+					 *
 					try {
 						appendQuerySummary(file.getCanonicalPath().toString());
 					} catch (IOException e) {

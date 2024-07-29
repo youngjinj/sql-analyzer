@@ -38,7 +38,6 @@ public class DatabaseManager {
 
 	public void initConnect() {
 		this.connect();
-		onlyCheckValidation = false;
 	}
 
 	public void initPseudoConnect() {
@@ -67,8 +66,14 @@ public class DatabaseManager {
 		} catch (Exception e) {
 			System.err.println(e.getMessage());
 		}
+		
+		onlyCheckValidation = false;
 	}
 
+	public Connection getConnection() {
+		return this.connection;
+	}
+	
 	public void close() {
 		try {
 			connection.close();
@@ -93,7 +98,7 @@ public class DatabaseManager {
 		}
 	}
 
-	private String prepareQuery(String query) {
+	public String prepareQuery(String query) {
 		String prepareQuery = null;
 		prepareQuery = query.replaceAll("'", "''");
 		prepareQuery = "PREPARE q FROM '" + prepareQuery + "'";
@@ -108,7 +113,7 @@ public class DatabaseManager {
 		return "NO_ERROR";
 	}
 
-	private String validateQuery(String query) {
+	public String validateQuery(String query) {
 		return validator.validateSQL(query);
 	}
 }

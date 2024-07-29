@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>youngjinj</groupId>
 	<artifactId>sql-analyzer</artifactId>
-	<version>2022.09.15</version>
+	<version>2024.07.29</version>
 
 	<repositories>
 		<repository>
@@ -14,6 +14,20 @@
 	</repositories>
 
 	<dependencies>
+		<!-- https://mvnrepository.com/artifact/org.mybatis/mybatis -->
+		<dependency>
+			<groupId>org.mybatis</groupId>
+			<artifactId>mybatis</artifactId>
+			<version>3.5.11</version>
+		</dependency>
+
+		<!-- https://mvnrepository.com/artifact/com.beust/jcommander -->
+		<dependency>
+			<groupId>com.beust</groupId>
+			<artifactId>jcommander</artifactId>
+			<version>1.82</version>
+		</dependency>
+	
 		<!-- https://mvnrepository.com/artifact/cubrid/cubrid-jdbc -->
 		<dependency>
 			<groupId>cubrid</groupId>

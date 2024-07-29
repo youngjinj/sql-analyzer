@@ -1,22 +1,23 @@
 package com.cubrid.parser;
 
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Stack;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
-import org.xml.sax.SAXParseException;
 import org.xml.sax.ext.DefaultHandler2;
 import org.xml.sax.ext.LexicalHandler;
 
 import com.cubrid.analyzer.SQLAnalyzer;
 import com.cubrid.database.DatabaseManager;
+
+import ognl.OgnlHelper;
 
 public class SqlMapHandler extends DefaultHandler2 implements LexicalHandler {
 	private final String BIND_VARIABLE = "?";
@@ -70,10 +71,13 @@ public class SqlMapHandler extends DefaultHandler2 implements LexicalHandler {
 	private final String MAPPER_CONFIG_DTD = "http://mybatis.org/dtd/mybatis-3-config.dtd";
 	private final String MAPPER_DTD = "http://mybatis.org/dtd/mybatis-3-mapper.dtd";
 
-	private HashMap<String, String> mapDocType = null;
-	private HashMap<String, String> mapIsEmpty = null;
-	private HashMap<String, String> mapIsEqual = null;
-	private HashMap<String, String> mapIsGreaterLess = null;
+	private OgnlHelper ognlHelper = null;
+	private Map<String, Object> parameterMap = null;
+	
+	private Map<String, String> mapDocType = null;
+	private Map<String, String> mapIsEmpty = null;
+	private Map<String, String> mapIsEqual = null;
+	private Map<String, String> mapIsGreaterLess = null;
 
 	private Stack<SqlMapTag> stackReadTag = null;
 
@@ -103,6 +107,9 @@ public class SqlMapHandler extends DefaultHandler2 implements LexicalHandler {
 		} catch (IOException e) {
 			System.err.println(e.getMessage());
 		}
+		
+		ognlHelper = new OgnlHelper();
+		parameterMap= new HashMap<String, Object>();
 
 		mapDocType = new HashMap<String, String>();
 		
@@ -220,6 +227,7 @@ public class SqlMapHandler extends DefaultHandler2 implements LexicalHandler {
 
 		if (currentTag.getName().toUpperCase().matches(TAG_DML)) {
 			appendQueryId(currentTag.getName(), currentTag.getId());
+			parameterMap.clear();
 		}
 	}
 
@@ -273,6 +281,27 @@ public class SqlMapHandler extends DefaultHandler2 implements LexicalHandler {
 				errorBuffer.append("--------------------------------------------------------------------------------");
 				/**/
 			}
+			/* debug */
+			StringBuilder ognlHelperErrorBuffer = ognlHelper.getErrorBuffer();
+			if (ognlHelperErrorBuffer.length() != 0)
+			{
+				StringBuilder errorBuffer = databaseManager.getErrorBuffer();
+				if (errorBuffer.length() == 0) {
+					errorBuffer
+							.append("--------------------------------------------------------------------------------");
+				}
+				errorBuffer.append(System.getProperty("line.separator"));
+				errorBuffer.append("[" + currentTag.getName().toUpperCase() + "] ID: " + currentTag.getId());
+				errorBuffer.append(System.getProperty("line.separator"));
+				errorBuffer.append(System.getProperty("line.separator"));
+				errorBuffer.append(ognlHelperErrorBuffer.toString());
+				errorBuffer.append(System.getProperty("line.separator"));
+				errorBuffer.append("--------------------------------------------------------------------------------");
+				
+				ognlHelper.resetErrorBuffer();
+			}
+			/**/
+
 			appendResult(result);
 			break;
 
@@ -369,8 +398,7 @@ public class SqlMapHandler extends DefaultHandler2 implements LexicalHandler {
 						if ((beforeTag.getPrepend() != null) && (beforeTag.getContents().length() == 0)
 								&& (currentTag.getContents().length() > 0)) {
 							beforeTag.addContents(" " + currentTag.getContents() + " ");
-						}
-						if ((beforeTag.getContents().length() > 0) && (currentTag.getContents().length() > 0)) {
+						} else if ((beforeTag.getContents().length() > 0) && (currentTag.getContents().length() > 0)) {
 							beforeTag.addContents(" " + currentTag.getPrepend() + " " + currentTag.getContents() + " ");
 						}
 					}
@@ -378,9 +406,7 @@ public class SqlMapHandler extends DefaultHandler2 implements LexicalHandler {
 						if ((beforeTag.getPrepend() != null) && (beforeTag.getContents().length() == 0)
 								&& (currentTag.getContents().length() > 0)) {
 							beforeTag.addContents(" " + currentTag.getOpen() + currentTag.getContents() + " ");
-						}
-
-						if ((beforeTag.getContents().length() > 0) && (currentTag.getContents().length() > 0)) {
+						} else if ((beforeTag.getContents().length() > 0) && (currentTag.getContents().length() > 0)) {
 							beforeTag.addContents(" " + currentTag.getPrepend() + " " + currentTag.getOpen()
 									+ currentTag.getContents() + " ");
 						}
@@ -403,9 +429,7 @@ public class SqlMapHandler extends DefaultHandler2 implements LexicalHandler {
 						if ((beforeTag.getPrepend() != null) && (beforeTag.getContents().length() == 0)
 								&& (currentTag.getContents().length() > 0)) {
 							beforeTag.addContents(" " + currentTag.getContents() + " ");
-						}
-
-						if ((beforeTag.getContents().length() > 0) && (currentTag.getContents().length() > 0)) {
+						} else if ((beforeTag.getContents().length() > 0) && (currentTag.getContents().length() > 0)) {
 							beforeTag.addContents(" " + currentTag.getPrepend() + " " + currentTag.getContents() + " ");
 						}
 					}
@@ -413,9 +437,7 @@ public class SqlMapHandler extends DefaultHandler2 implements LexicalHandler {
 						if ((beforeTag.getPrepend() != null) && (beforeTag.getContents().length() == 0)
 								&& (currentTag.getContents().length() > 0)) {
 							beforeTag.addContents(" " + currentTag.getOpen() + currentTag.getContents() + " ");
-						}
-
-						if ((beforeTag.getContents().length() > 0) && (currentTag.getContents().length() > 0)) {
+						} else if ((beforeTag.getContents().length() > 0) && (currentTag.getContents().length() > 0)) {
 							beforeTag.addContents(" " + currentTag.getPrepend() + " " + currentTag.getOpen()
 									+ currentTag.getContents() + " ");
 						}
@@ -438,8 +460,7 @@ public class SqlMapHandler extends DefaultHandler2 implements LexicalHandler {
 						if ((beforeTag.getPrepend() != null) && (beforeTag.getContents().length() == 0)
 								&& (currentTag.getContents().length() > 0)) {
 							beforeTag.addContents(" " + currentTag.getContents() + " ");
-						}
-						if ((beforeTag.getContents().length() > 0) && (currentTag.getContents().length() > 0)) {
+						} else if ((beforeTag.getContents().length() > 0) && (currentTag.getContents().length() > 0)) {
 							beforeTag.addContents(" " + currentTag.getPrepend() + " " + currentTag.getContents() + " ");
 						}
 					}
@@ -447,8 +468,7 @@ public class SqlMapHandler extends DefaultHandler2 implements LexicalHandler {
 						if ((beforeTag.getPrepend() != null) && (beforeTag.getContents().length() == 0)
 								&& (currentTag.getContents().length() > 0)) {
 							beforeTag.addContents(" " + currentTag.getOpen() + currentTag.getContents() + " ");
-						}
-						if ((beforeTag.getContents().length() > 0) && (currentTag.getContents().length() > 0)) {
+						} else if ((beforeTag.getContents().length() > 0) && (currentTag.getContents().length() > 0)) {
 							beforeTag.addContents(" " + currentTag.getPrepend() + " " + currentTag.getOpen()
 									+ currentTag.getContents() + " ");
 						}
@@ -471,9 +491,7 @@ public class SqlMapHandler extends DefaultHandler2 implements LexicalHandler {
 						if ((beforeTag.getPrepend() != null) && (beforeTag.getContents().length() == 0)
 								&& (currentTag.getContents().length() > 0)) {
 							beforeTag.addContents(" " + currentTag.getContents() + " ");
-						}
-
-						if ((beforeTag.getContents().length() > 0) && (currentTag.getContents().length() > 0)) {
+						} else if ((beforeTag.getContents().length() > 0) && (currentTag.getContents().length() > 0)) {
 							beforeTag.addContents(" " + currentTag.getPrepend() + " " + currentTag.getContents() + " ");
 						}
 					}
@@ -481,9 +499,7 @@ public class SqlMapHandler extends DefaultHandler2 implements LexicalHandler {
 						if ((beforeTag.getPrepend() != null) && (beforeTag.getContents().length() == 0)
 								&& (currentTag.getContents().length() > 0)) {
 							beforeTag.addContents(" " + currentTag.getOpen() + currentTag.getContents() + " ");
-						}
-
-						if ((beforeTag.getContents().length() > 0) && (currentTag.getContents().length() > 0)) {
+						} else if ((beforeTag.getContents().length() > 0) && (currentTag.getContents().length() > 0)) {
 							beforeTag.addContents(" " + currentTag.getPrepend() + " " + currentTag.getOpen()
 									+ currentTag.getContents() + " ");
 						}
@@ -500,8 +516,7 @@ public class SqlMapHandler extends DefaultHandler2 implements LexicalHandler {
 						.parseInt(currentTag.getCompareValue())) {
 					if (currentTag.getPrepend() == null) {
 						beforeTag.addContents(" " + currentTag.getContents() + " ");
-					}
-					if (currentTag.getPrepend() != null) {
+					} else if (currentTag.getPrepend() != null) {
 						beforeTag.addContents(" " + currentTag.getPrepend() + " " + currentTag.getContents() + " ");
 					}
 				}
@@ -516,8 +531,7 @@ public class SqlMapHandler extends DefaultHandler2 implements LexicalHandler {
 						.parseInt(currentTag.getCompareValue())) {
 					if (currentTag.getPrepend() == null) {
 						beforeTag.addContents(" " + currentTag.getContents() + " ");
-					}
-					if (currentTag.getPrepend() != null) {
+					} else if (currentTag.getPrepend() != null) {
 						beforeTag.addContents(" " + currentTag.getPrepend() + " " + currentTag.getContents() + " ");
 					}
 				}
@@ -536,6 +550,12 @@ public class SqlMapHandler extends DefaultHandler2 implements LexicalHandler {
 			case TAG_OTHERWISE:
 				break;
 
+			case TAG_IF:
+				if (ognlHelper.getValue(currentTag.getTest(), parameterMap)) {
+					beforeTag.addContents(" " + pttrnMtchSQL(currentTag.getContents()) + " ");
+				}
+				break;
+				
 			default:
 				break;
 			}
@@ -601,6 +621,10 @@ public class SqlMapHandler extends DefaultHandler2 implements LexicalHandler {
 			tag.setConjunction(attributes.getValue("conjunction"));
 		}
 
+		if (attributes.getValue("test") != null) {
+			tag.setTest(attributes.getValue("test"));
+		}
+		
 		stackReadTag.push(tag);
 	}
 
